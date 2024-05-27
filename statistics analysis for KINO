@@ -1,0 +1,259 @@
+import numpy as np
+from collections import Counter
+import seaborn as sns
+import networkx as nx
+import matplotlib.pyplot as plt
+
+from collections import Counter
+from scipy.stats import gaussian_kde
+from itertools import combinations
+from matplotlib.sankey import Sankey
+
+data = [
+
+    [7, 8, 9, 11, 14, 15, 17, 23, 24, 30, 32, 33, 35, 51, 52, 56, 59, 64, 66, 74],
+    [16, 20, 21, 28, 29, 33, 34, 36, 37, 38, 41, 44, 52, 63, 66, 71, 72, 74, 77, 80],
+    [2, 11, 13, 22, 23, 27, 29, 30, 39, 42, 43, 50, 55, 62, 64, 68, 69, 71, 74, 75],
+    [1, 3, 6, 8, 12, 13, 17, 19, 21, 26, 30, 31, 34, 41, 44, 45, 53, 58, 59, 60],
+    [2, 5, 9, 10, 11, 13, 14, 17, 21, 24, 29, 30, 31, 37, 51, 55, 56, 63, 66, 80],
+    [10, 12, 21, 23, 24, 34, 37, 41, 49, 50, 51, 56, 59, 60, 68, 71, 73, 76, 79, 80],
+    [1, 7, 9, 11, 13, 17, 23, 26, 28, 36, 38, 39, 47, 50, 63, 68, 73, 74, 75, 77],
+    [1, 2, 8, 11, 20, 24, 28, 30, 32, 34, 38, 43, 44, 47, 51, 58, 60, 64, 72, 76],
+    [3, 4, 14, 19, 21, 23, 27, 29, 34, 35, 38, 48, 51, 55, 56, 60, 61, 70, 74, 76],
+    [9, 10, 13, 14, 15, 17, 24, 26, 29, 32, 35, 40, 48, 55, 60, 61, 70, 76, 77, 80],
+]
+
+max_common = 0
+common_numbers = []
+
+# Μετατροπή όλων των λιστών σε σύνολα για γρηγορότερη πρόσβαση
+data_sets = [set(line) for line in data]
+
+for i in range(len(data_sets)):
+    for j in range(i + 1, len(data_sets)):
+        common = data_sets[i] & data_sets[j]
+        common_count = len(common)
+        common_numbers.append((i, j, common_count, common))
+        if common_count > max_common:
+            max_common = common_count
+
+# Εύρεση όλων των ζευγών γραμμών με τον μέγιστο αριθμό κοινών αριθμών
+max_common_pairs = [(i, j, common) for i, j, count, common in common_numbers if count == max_common]
+
+# Εκτύπωση για κάθε ζεύγος γραμμών
+print("\nOI KOINOI ΑΡΙΘΜΟΙ ΜΕΤΑΞΥ ΟΛΩΝ ΤΩΝ ΖΕΥΓΑΡΙΩΝ ΤΩΝ ΚΛΗΡΩΣΕΩΝ:")
+for i, j, count, common in common_numbers:
+    print(f"Η ΚΛΗΡΩΣΗ {i + 1} ΚΑΙ Η ΚΛΗΡΩΣΗ {j + 1} ΕΧΟΥΝ {count} ΚΟΙΝΟΥΣ ΑΡΙΘΜΟΥΣ: {sorted(common)}")
+
+# Εκτύπωση για τις γραμμές με τους περισσότερους κοινούς αριθμούς
+print(f"\nΟι κληρώσεις με τους περισσότερους κοινούς αριθμούς ({max_common}) είναι:")
+for i, j, common in max_common_pairs:
+    print(f"Η ΚΛΗΡΩΣΗ {i + 1} ΚΑΙ Η ΚΛΗΡΩΣΗ {j + 1} ΕΧΟΥΝ ΚΟΙΝΟΥΣ ΑΡΙΘΜΟΥΣ: {sorted(common)}")
+
+# Υπολογισμός της συχνότητας εμφάνισης κάθε αριθμού
+all_numbers = [num for sublist in data for num in sublist]
+frequency = Counter(all_numbers)
+
+# Εκτύπωση της συχνότητας εμφάνισης κάθε αριθμού σε αύξουσα σειρά αριθμών
+print("\nΣυχνότητα εμφάνισης κάθε αριθμού:")
+for number in sorted(frequency):
+    print(f"Αριθμός {number}: {frequency[number]} φορές")
+
+# Υπολογισμός και εκτύπωση στατιστικών για κάθε γραμμή
+print("\nΣτατιστικά για κάθε Κλήρωση:")
+for i, line in enumerate(data):
+    mean = int(np.mean(line))  # Μέσος όρος: Το άθροισμα όλων των αριθμών δια του πλήθους τους
+    median = int(np.median(line))  # Διάμεσος: Ο μεσαίος αριθμός της διατεταγμένης λίστας
+    std_dev = int(np.std(line))  # Τυπική απόκλιση: Μέτρο διασποράς των τιμών από τον μέσο όρο
+    min_value = int(np.min(line))  # Ελάχιστο: Η μικρότερη τιμή της γραμμής
+    max_value = int(np.max(line))  # Μέγιστο: Η μεγαλύτερη τιμή της γραμμής
+    variance = int(np.var(line))  # Διακύμανση: Το μέσο των τετραγώνων των αποκλίσεων από τον μέσο όρο
+    q1 = int(np.percentile(line, 25))  # 1ο Τεταρτημόριο: Η μέση τιμή του κατώτερου 25% των δεδομένων
+    q3 = int(np.percentile(line, 75))  # 3ο Τεταρτημόριο: Η μέση τιμή του ανώτερου 25% των δεδομένων
+    iqr = q3 - q1  # Ενδοτεταρτημοριακό Εύρος: Η διαφορά μεταξύ του 3ου και του 1ου τεταρτημορίου
+    range_value = max_value - min_value  # Εύρος: Η διαφορά μεταξύ της μέγιστης και της ελάχιστης τιμής
+
+    print(f"\nΚλήρωση {i + 1}:")
+    print(f"  Μέσος όρος: {mean}")
+    print(f"  Διάμεσος: {median}")
+    print(f"  Τυπική απόκλιση: {std_dev}")
+    print(f"  Διακύμανση: {variance}")
+    print(f"  Ελάχιστο: {min_value}")
+    print(f"  Μέγιστο: {max_value}")
+    print(f"  Εύρος: {range_value}")
+    print(f"  1ο Τεταρτημόριο: {q1}")
+    print(f"  3ο Τεταρτημόριο: {q3}")
+    print(f"  Ενδοτεταρτημοριακό Εύρος: {iqr}")
+
+# Εκτύπωση του πλήθους των γραμμών
+print(f"\nΣυνολικός αριθμός κληρώσεων: {len(data)}")
+
+# Δημιουργία γραφικής παράστασης για τη συχνότητα εμφάνισης των αριθμών
+numbers = sorted(frequency.keys())
+counts = [frequency[num] for num in numbers]
+
+plt.figure(figsize=(10, 6))
+plt.bar(numbers, counts, color='blue')
+plt.xlabel('Αριθμός')
+plt.ylabel('Συχνότητα Εμφάνισης')
+plt.title('Συχνότητα Εμφάνισης Κάθε Αριθμού')
+plt.xticks(numbers)
+plt.grid(axis='y')
+plt.show()
+
+# Υπολογισμός στατιστικών για τις κληρώσεις
+variances = []
+std_devs = []
+
+for line in data:
+    variances.append(round(np.var(line)))
+    std_devs.append(round(np.std(line)))
+
+# Εκτύπωση αποτελεσμάτων
+print("Διακύμανση κάθε κλήρωσης:", variances)
+print("Τυπική απόκλιση κάθε κλήρωσης:", std_devs)
+
+# Δημιουργία Διαγράμματος Κουτιού
+plt.figure(figsize=(10, 5))
+plt.boxplot(data, patch_artist=True)
+plt.title('Διάγραμμα Κουτιού για κάθε Κλήρωση')
+plt.xlabel('Κλήρωση')
+plt.ylabel('Αριθμοί')
+plt.show()
+
+# Δημιουργία Ιστογράμματος για Διακύμανση και Τυπική Απόκλιση
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.hist(variances, bins=10, color='blue', alpha=0.7)
+plt.title('Ιστόγραμμα Διακύμανσης')
+plt.xlabel('Διακύμανση')
+plt.ylabel('Συχνότητα')
+
+plt.subplot(1, 2, 2)
+plt.hist(std_devs, bins=10, color='red', alpha=0.7)
+plt.title('Ιστόγραμμα Τυπικής Απόκλισης')
+plt.xlabel('Τυπική Απόκλιση')
+plt.ylabel('Συχνότητα')
+
+plt.tight_layout()
+plt.show()
+
+# Ενοποίηση όλων των αριθμών σε μία λίστα
+all_numbers = [num for sublist in data for num in sublist]
+
+# Υπολογισμός της συνάρτησης πυκνότητας πιθανότητας
+density = gaussian_kde(all_numbers)
+x_vals = np.linspace(min(all_numbers), max(all_numbers), 1000)
+density_vals = density(x_vals)
+
+# Δημιουργία της γραφικής παράστασης
+plt.figure(figsize=(10, 6))
+plt.plot(x_vals, density_vals, label='PDF')
+plt.title('Συνάρτηση Πυκνότητας Πιθανότητας των Αριθμών')
+plt.xlabel('Αριθμός')
+plt.ylabel('Πυκνότητα')
+plt.grid(True)
+plt.show()
+
+# Δημιουργία μίας μητρώου συσχέτισης
+correlation_matrix = np.corrcoef(data)
+
+# Δημιουργία του heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+plt.title('Διάγραμμα Συσχέτισης μεταξύ Κληρώσεων')
+plt.xlabel('Κλήρωση')
+plt.ylabel('Κλήρωση')
+plt.show()
+
+# Κατασκευή δικτύου
+G = nx.Graph()
+
+# Προσθήκη κόμβων και ακμών βάσει συχνότητας συνεμφάνισης
+for line in data:
+    unique_numbers = set(line)
+    for number in unique_numbers:
+        if not G.has_node(number):
+            G.add_node(number)
+        # Προσθήκη ακμών μεταξύ όλων των αριθμών στην ίδια κλήρωση
+        for other_number in unique_numbers:
+            if number != other_number:
+                if G.has_edge(number, other_number):
+                    G[number][other_number]['weight'] += 1
+                else:
+                    G.add_edge(number, other_number, weight=1)
+
+# Απεικόνιση του δικτύου
+plt.figure(figsize=(12, 12))
+pos = nx.spring_layout(G, seed=42)  # Θέσεις για την ομοιόμορφη διάταξη των κόμβων
+weights = nx.get_edge_attributes(G, 'weight').values()
+nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=700, edge_color=list(weights), width=3.0, edge_cmap=plt.cm.Blues)
+plt.title('Δίκτυο Συχνοτήτων Αριθμών')
+plt.show()
+
+# Δημιουργία δικτύου για τους βαθμούς των κόμβων
+G = nx.Graph()
+
+# Προσθήκη κόμβων και ακμών
+for draw in data:
+    for combination in combinations(draw, 2):
+        if G.has_edge(combination[0], combination[1]):
+            G[combination[0]][combination[1]]['weight'] += 1
+        else:
+            G.add_edge(combination[0], combination[1], weight=1)
+
+# Υπολογισμός βαθμών κόμβων
+degrees = {node: val for node, val in G.degree(weight='weight')}
+
+# Εμφάνιση βαθμών κόμβων
+print("\nΒαθμοί Κόμβων:")
+for node, degree in sorted(degrees.items(), key=lambda item: item[1], reverse=True):
+    print(f"Αριθμός {node}: {degree}")
+
+# Προετοιμασία για ανάλυση συχνών συνδυασμών
+frequent_combinations = [(u, v, d['weight']) for u, v, d in G.edges(data=True) if d['weight'] > 1]
+
+# Εμφάνιση συχνών συνδυασμών
+print("\nΣυχνοί Συνδυασμοί Κόμβων:")
+for u, v, weight in sorted(frequent_combinations, key=lambda item: item[2], reverse=True):
+    print(f"Κόμβοι {u} και {v} εμφανίζονται μαζί {weight} φορές")
+
+# Κατανομή Συχνότητας Εμφάνισης Κάθε Αριθμού
+frequency = Counter(all_numbers)
+plt.figure(figsize=(14, 7))
+plt.bar(frequency.keys(), frequency.values())
+plt.title('Κατανομή Συχνότητας Εμφάνισης Κάθε Αριθμού')
+plt.xlabel('Αριθμός')
+plt.ylabel('Συχνότητα')
+plt.show()
+
+# Υπολογισμός κεντρικότητας κατά closeness με χρήση του βάρους της ακμής
+def inverse_weight(u, v, d):
+    return 1 / d['weight']
+
+closeness_centrality = nx.closeness_centrality(G, distance=inverse_weight)
+sorted_closeness = sorted(closeness_centrality.items(), key=lambda x: x[1], reverse=True)
+print("\nCloseness Centrality:")
+for node, closeness in sorted_closeness:
+    print(f"Αριθμός {node}: {closeness:.4f}")
+
+# Διαγράμματος Ροής Δεδομένων (Sankey Diagram)
+# Κατασκευή δικτύου
+G = nx.Graph()
+
+# Προσθήκη κόμβων και ακμών
+for draw in data:
+    for combination in combinations(draw, 2):
+        if G.has_edge(combination[0], combination[1]):
+            G[combination[0]][combination[1]]['weight'] += 1
+        else:
+            G.add_edge(combination[0], combination[1], weight=1)
+
+# Υπολογισμός βαθμών κόμβων
+degrees = {node: val for node, val in G.degree(weight='weight')}
+
+# Εκτύπωση βαθμών κόμβων
+print("\nΒαθμοί Κόμβων:")
+for node, degree in sorted(degrees.items(), key=lambda item: item[1], reverse=True):
+    print(f"Αριθμός {node}: {degree}")
